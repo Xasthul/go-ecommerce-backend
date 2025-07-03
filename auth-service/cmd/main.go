@@ -33,10 +33,7 @@ func main() {
 	runMigrations(databaseURL)
 
 	r := gin.Default()
-
-	r.POST("/register", apiHandler.RegisterHandler)
-	r.POST("/login", apiHandler.LoginHandler)
-
+	apiHandler.RegisterRoutes(r)
 	r.Run(":" + cfg.Port)
 }
 
