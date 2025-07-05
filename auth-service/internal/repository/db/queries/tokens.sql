@@ -1,4 +1,4 @@
--- name: CreateRefreshToken :one
+-- name: CreateRefreshToken :exec
 INSERT INTO refresh_tokens (
     user_id,
     token_hash,
@@ -7,8 +7,7 @@ INSERT INTO refresh_tokens (
     $1,              -- user_id
     $2,              -- sha‑256(token)
     $3               -- expires_at (TIMESTAMPTZ)
-)
-RETURNING id, user_id, token_hash, expires_at, created_at;
+);
 
 -- name: GetRefreshToken :one
 SELECT *

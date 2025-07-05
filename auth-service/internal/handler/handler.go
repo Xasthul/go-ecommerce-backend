@@ -15,6 +15,16 @@ func NewAPIHandler(s *service.AuthService) *APIHandler {
 	return &APIHandler{s: s}
 }
 
+func (h *APIHandler) respondWithAppError(c *gin.Context, err error) {
+	if appErr, ok := err.(*service.AppError); ok {
+		c.JSON(appErr.Code, gin.H{"error": appErr.Error()})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+}
+
 func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/register", h.registerHandler)
 	r.POST("/login", h.loginHandler)
@@ -22,13 +32,13 @@ func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/logout", h.logoutHandler)
 }
 
-type registerReq struct {
+type registerRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 }
 
 func (h *APIHandler) registerHandler(c *gin.Context) {
-	var req registerReq
+	var req registerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -41,14 +51,29 @@ func (h *APIHandler) registerHandler(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-// type loginReq struct {
-// 	Email    string `json:"email" binding:"required,email"`
-// 	Password string `json:"password" binding:"required"`
-// }
+type loginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
 
-func (h *APIHandler) loginHandler(c *gin.Context) {}
+func (h *APIHandler) loginHandler(c *gin.Context) {
+	var req loginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	tokens, err := h.s.Login(c.Request.Context(), req.Email, req.Password)
+	if err != nil {
+		h.respondWithAppError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"access_token":  tokens.AccessToken,
+		"refresh_token": tokens.RefreshToken,
+	})
+}
 
-// type refreshReq struct {
+// type refreshRequest struct {
 // 	RefreshToken string `json:"refresh_token" binding:"required"`
 // }
 

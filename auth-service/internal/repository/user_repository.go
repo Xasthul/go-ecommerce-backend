@@ -21,7 +21,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, email string, passwordH
 	})
 }
 
-func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*gen.User, error) {
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*gen.User, error) {
 	user, err := r.q.GetUserByEmail(ctx, email)
 	if err != nil {
 		return nil, err

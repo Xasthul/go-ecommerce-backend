@@ -30,7 +30,14 @@ func main() {
 
 	queries := gen.New(db)
 	userRepository := repository.NewUserRepository(queries)
-	authService := service.NewAuthService(userRepository)
+	tokenRepository := repository.NewTokenRepository(queries)
+	authService := service.NewAuthService(
+		userRepository,
+		tokenRepository,
+		cfg.JWTSecret,
+		cfg.AccessTokenTTL,
+		cfg.RefreshTokenTTL,
+	)
 	apiHandler := handler.NewAPIHandler(authService)
 
 	r := gin.Default()
