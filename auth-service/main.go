@@ -1,9 +1,8 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"log"
-	"time"
 
 	"github.com/Xasthul/go-ecommerce-backend/auth-service/internal/config"
 	"github.com/Xasthul/go-ecommerce-backend/auth-service/internal/handler"
@@ -11,26 +10,28 @@ import (
 	gen "github.com/Xasthul/go-ecommerce-backend/auth-service/internal/repository/db/gen"
 	"github.com/Xasthul/go-ecommerce-backend/auth-service/internal/service"
 	"github.com/gin-gonic/gin"
-	"github.com/mattes/migrate"
+	"github.com/golang-migrate/migrate"
+	_ "github.com/golang-migrate/migrate/database/postgres"
+	_ "github.com/golang-migrate/migrate/source/file"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
 	cfg := config.LoadEnv()
 
-	databaseURL := cfg.PGConn
+	databaseURL := cfg.DatabaseURL
 
-	db, err := sql.Open("pgx", cfg.PGConn)
+	db, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
-		log.Fatal("connect postgres")
+		log.Fatal("connect postgres: ", err)
 	}
-	db.SetConnMaxIdleTime(time.Minute)
+	defer db.Close()
+	runMigrations(databaseURL)
 
 	queries := gen.New(db)
 	userRepository := repository.NewUserRepository(queries)
 	authService := service.NewAuthService(userRepository)
 	apiHandler := handler.NewAPIHandler(authService)
-
-	runMigrations(databaseURL)
 
 	r := gin.Default()
 	apiHandler.RegisterRoutes(r)
@@ -39,7 +40,7 @@ func main() {
 
 func runMigrations(databaseURL string) {
 	m, err := migrate.New(
-		"file://db/migration",
+		"file://internal/repository/db/migrations",
 		databaseURL,
 	)
 	if err != nil {
