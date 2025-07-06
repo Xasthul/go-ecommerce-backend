@@ -32,8 +32,16 @@ services:
     environment:
       - DB_DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/auth?sslmode=disable
       - PORT=8000
+
+  api-gateway:
+    build: ./api-gateway
+    depends_on:
+      - auth-service
+    environment:
+      - PORT=8000
+      - AUTH_SERVICE_URL=http://auth-service:8000
     ports:
-      - "${AUTH_SERVICE_PORT}:8000"
+      - "${API_GATEWAY_PORT}:8000"
 
 volumes:
   pgdata:
