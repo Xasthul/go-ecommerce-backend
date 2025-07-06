@@ -1,0 +1,2 @@
+DROP TAbLE IF EXISTS categories;
+DROP TAbLE IF EXISTS products;

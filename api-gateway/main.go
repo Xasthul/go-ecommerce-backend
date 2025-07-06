@@ -15,26 +15,34 @@ func main() {
 
 	r := gin.Default()
 
-	authServiceURL, _ := url.Parse(cfg.AuthServiceURL)
-	r.Any("/auth/*proxyPath", gin.WrapH(newSingleHostReverseProxy(authServiceURL, "/auth")))
-
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	authService := createReverseProxy(cfg.AuthServiceURL)
+	r.POST("/auth/login", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
+	r.POST("/auth/register", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
+	r.POST("/auth/refresh", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
+
+	productService := createReverseProxy(cfg.ProductServiceURL)
+	r.GET("/products", gin.WrapH(productService))
+	r.GET("/products/*proxyPath", gin.WrapH(productService))
+	r.POST("/admin/products", gin.WrapH(productService))
+	r.PUT("/admin/products/*proxyPath", gin.WrapH(productService))
+	r.DELETE("/admin/products/*proxyPath", gin.WrapH(productService))
+	r.POST("/admin/categories", gin.WrapH(productService))
+
 	r.Run(":" + cfg.Port)
 }
 
-func newSingleHostReverseProxy(target *url.URL, prefix string) *httputil.ReverseProxy {
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	originalDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		originalDirector(req)
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
-		if req.URL.Path == "" {
-			req.URL.Path = "/"
-		}
-	}
-	// TODO: Add trace header
-	return proxy
+func createReverseProxy(target string) *httputil.ReverseProxy {
+	url, _ := url.Parse(target)
+	return httputil.NewSingleHostReverseProxy(url)
+}
+
+func stripPrefixAndProxy(proxy *httputil.ReverseProxy, prefix string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, prefix)
+		proxy.ServeHTTP(w, r)
+	})
 }

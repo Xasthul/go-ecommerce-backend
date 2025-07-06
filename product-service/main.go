@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/Xasthul/go-ecommerce-backend/auth-service/internal/config"
-	"github.com/Xasthul/go-ecommerce-backend/auth-service/internal/handler"
-	"github.com/Xasthul/go-ecommerce-backend/auth-service/internal/repository"
-	gen "github.com/Xasthul/go-ecommerce-backend/auth-service/internal/repository/db/gen"
-	"github.com/Xasthul/go-ecommerce-backend/auth-service/internal/service"
+	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/config"
+	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/handler"
+	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
+	gen "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
+	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/postgres"
@@ -29,16 +29,13 @@ func main() {
 	runMigrations(databaseURL)
 
 	queries := gen.New(db)
-	userRepository := repository.NewUserRepository(queries)
-	tokenRepository := repository.NewTokenRepository(queries)
-	authService := service.NewAuthService(
-		userRepository,
-		tokenRepository,
-		cfg.JWTSecret,
-		cfg.AccessTokenTTL,
-		cfg.RefreshTokenTTL,
+	productRepository := repository.NewProductRepository(queries)
+	categoryRepository := repository.NewCategoryRepository(queries)
+	productService := service.NewProductService(
+		productRepository,
+		categoryRepository,
 	)
-	apiHandler := handler.NewAPIHandler(authService)
+	apiHandler := handler.NewAPIHandler(productService)
 
 	r := gin.Default()
 	r.Use(gin.Recovery())

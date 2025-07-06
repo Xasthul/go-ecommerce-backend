@@ -26,20 +26,29 @@ services:
     build: ./auth-service
     depends_on:
       - postgres
-      # - redis
     env_file:
       - ./auth-service/.env
     environment:
       - DB_DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/auth?sslmode=disable
       - PORT=8000
 
+  product-service:
+    build: ./product-service
+    depends_on:
+      - postgres
+    environment:
+      - DB_DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/products?sslmode=disable
+      - PORT=8000
+
   api-gateway:
     build: ./api-gateway
     depends_on:
       - auth-service
+      - product-service
     environment:
       - PORT=8000
       - AUTH_SERVICE_URL=http://auth-service:8000
+      - PRODUCT_SERVICE_URL=http://product-service:8000
     ports:
       - "${API_GATEWAY_PORT}:8000"
 

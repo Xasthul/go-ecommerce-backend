@@ -26,10 +26,9 @@ func (h *APIHandler) respondWithAppError(c *gin.Context, err error) {
 }
 
 func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
-	r.POST("/register", h.registerHandler)
-	r.POST("/login", h.loginHandler)
-	r.POST("/refresh", h.refreshHandler)
-	r.POST("/logout", h.logoutHandler)
+	r.POST("/register", h.registerUser)
+	r.POST("/login", h.login)
+	r.POST("/refresh", h.refreshTokens)
 }
 
 type registerRequest struct {
@@ -37,7 +36,7 @@ type registerRequest struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
-func (h *APIHandler) registerHandler(c *gin.Context) {
+func (h *APIHandler) registerUser(c *gin.Context) {
 	var req registerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -56,7 +55,7 @@ type loginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func (h *APIHandler) loginHandler(c *gin.Context) {
+func (h *APIHandler) login(c *gin.Context) {
 	var req loginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -77,7 +76,7 @@ type refreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required,jwt"`
 }
 
-func (h *APIHandler) refreshHandler(c *gin.Context) {
+func (h *APIHandler) refreshTokens(c *gin.Context) {
 	var req refreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -93,5 +92,3 @@ func (h *APIHandler) refreshHandler(c *gin.Context) {
 		"refresh_token": tokens.RefreshToken,
 	})
 }
-
-func (h *APIHandler) logoutHandler(c *gin.Context) {}
