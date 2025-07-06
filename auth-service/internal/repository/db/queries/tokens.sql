@@ -19,10 +19,6 @@ LIMIT 1;
 DELETE FROM refresh_tokens
 WHERE token_hash = $1;
 
--- name: DeleteTokensByUser :exec
-DELETE FROM refresh_tokens
-WHERE user_id = $1;
-
 -- name: DeleteExpiredTokens :exec
 DELETE FROM refresh_tokens
 WHERE expires_at < NOW();

@@ -23,3 +23,15 @@ func (r *TokenRepository) CreateRefreshToken(ctx context.Context, userId uuid.UU
 		ExpiresAt: expiresAt,
 	})
 }
+
+func (r *TokenRepository) GetRefreshToken(ctx context.Context, tokenHash string) (*gen.RefreshToken, error) {
+	refreshToken, err := r.q.GetRefreshToken(ctx, tokenHash)
+	if err != nil {
+		return nil, err
+	}
+	return &refreshToken, nil
+}
+
+func (r *TokenRepository) DeleteRefreshToken(ctx context.Context, tokenHash string) error {
+	return r.q.DeleteRefreshToken(ctx, tokenHash)
+}

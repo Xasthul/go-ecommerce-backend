@@ -68,6 +68,27 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*issue
 	return s.issueTokens(ctx, user.ID)
 }
 
+func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*issuedTokensDTO, error) {
+	claims, err := s.parseRefresh(refreshToken)
+	if err != nil {
+		return nil, &AppError{Code: 401, Message: "invalid refresh token"}
+	}
+	now := time.Now()
+	if claims.ExpiresAt.Before(now) {
+		return nil, &AppError{Code: 401, Message: "refresh token expired"}
+	}
+	hash := sha256.Sum256([]byte(refreshToken))
+
+	savedRefreshToken, err := s.tokenRepository.GetRefreshToken(ctx, fmt.Sprintf("%x", hash[:]))
+	if err != nil {
+		return nil, &AppError{Code: 401, Message: "invalid refresh token"}
+	}
+	if s.tokenRepository.DeleteRefreshToken(ctx, savedRefreshToken.TokenHash) != nil {
+		return nil, &AppError{Code: 500, Message: "failed to remove refresh token"}
+	}
+	return s.issueTokens(ctx, savedRefreshToken.UserID)
+}
+
 func (s *AuthService) issueTokens(ctx context.Context, userId uuid.UUID) (*issuedTokensDTO, error) {
 	now := time.Now()
 	accessTokenClaims := jwt.RegisteredClaims{
@@ -102,4 +123,20 @@ func (s *AuthService) issueTokens(ctx context.Context, userId uuid.UUID) (*issue
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (a *AuthService) parseRefresh(token string) (*jwt.RegisteredClaims, error) {
+	parsed, err := jwt.ParseWithClaims(
+		token,
+		&jwt.RegisteredClaims{},
+		func(t *jwt.Token) (any, error) { return a.jwtSecret, nil },
+	)
+	if err != nil || !parsed.Valid {
+		return nil, err
+	}
+	claims, ok := parsed.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return nil, err
+	}
+	return claims, nil
 }

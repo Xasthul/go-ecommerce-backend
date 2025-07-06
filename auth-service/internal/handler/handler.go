@@ -73,10 +73,25 @@ func (h *APIHandler) loginHandler(c *gin.Context) {
 	})
 }
 
-// type refreshRequest struct {
-// 	RefreshToken string `json:"refresh_token" binding:"required"`
-// }
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required,jwt"`
+}
 
-func (h *APIHandler) refreshHandler(c *gin.Context) {}
+func (h *APIHandler) refreshHandler(c *gin.Context) {
+	var req refreshRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	tokens, err := h.s.RefreshToken(c.Request.Context(), req.RefreshToken)
+	if err != nil {
+		h.respondWithAppError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"access_token":  tokens.AccessToken,
+		"refresh_token": tokens.RefreshToken,
+	})
+}
 
 func (h *APIHandler) logoutHandler(c *gin.Context) {}
