@@ -44,6 +44,11 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("%d - %s", e.Code, e.Message)
 }
 
+type tokenClaims struct {
+	Role int16 `json:"role"`
+	jwt.RegisteredClaims
+}
+
 func (s *AuthService) RegisterUser(ctx context.Context, email, password string) error {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -65,7 +70,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*issue
 	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)) != nil {
 		return nil, &AppError{Code: 401, Message: "invalid credentials"}
 	}
-	return s.issueTokens(ctx, user.ID)
+	return s.issueTokens(ctx, user.ID, user.Role)
 }
 
 func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*issuedTokensDTO, error) {
@@ -73,41 +78,46 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*i
 	if err != nil {
 		return nil, &AppError{Code: 401, Message: "invalid refresh token"}
 	}
-	now := time.Now()
-	if claims.ExpiresAt.Before(now) {
-		return nil, &AppError{Code: 401, Message: "refresh token expired"}
-	}
+
 	hash := sha256.Sum256([]byte(refreshToken))
 
 	savedRefreshToken, err := s.tokenRepository.GetRefreshToken(ctx, fmt.Sprintf("%x", hash[:]))
 	if err != nil {
 		return nil, &AppError{Code: 401, Message: "invalid refresh token"}
 	}
+
 	if s.tokenRepository.DeleteRefreshToken(ctx, savedRefreshToken.TokenHash) != nil {
 		return nil, &AppError{Code: 500, Message: "failed to remove refresh token"}
 	}
-	return s.issueTokens(ctx, savedRefreshToken.UserID)
+
+	return s.issueTokens(ctx, savedRefreshToken.UserID, claims.Role)
 }
 
-func (s *AuthService) issueTokens(ctx context.Context, userId uuid.UUID) (*issuedTokensDTO, error) {
+func (s *AuthService) issueTokens(ctx context.Context, userId uuid.UUID, role int16) (*issuedTokensDTO, error) {
 	now := time.Now()
-	accessTokenClaims := jwt.RegisteredClaims{
-		Subject:   userId.String(),
-		ID:        uuid.NewString(),
-		ExpiresAt: jwt.NewNumericDate(now.Add(s.accessTokenTTL)),
-		IssuedAt:  jwt.NewNumericDate(now),
+	accessTokenClaims := tokenClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userId.String(),
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(now.Add(s.accessTokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(now),
+		},
+		Role: role,
 	}
 	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims).SignedString(s.jwtSecret)
 	if err != nil {
 		return nil, &AppError{Code: 500, Message: "failed to create access token"}
 	}
 
-	refreshTolenExpiresAt := now.Add(s.refreshTokenTTL)
-	refreshTokenClaims := jwt.RegisteredClaims{
-		Subject:   userId.String(),
-		ID:        uuid.NewString(),
-		ExpiresAt: jwt.NewNumericDate(refreshTolenExpiresAt),
-		IssuedAt:  jwt.NewNumericDate(now),
+	refreshTokenExpiresAt := now.Add(s.refreshTokenTTL)
+	refreshTokenClaims := tokenClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userId.String(),
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(refreshTokenExpiresAt),
+			IssuedAt:  jwt.NewNumericDate(now),
+		},
+		Role: role,
 	}
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims).SignedString(s.jwtSecret)
 	if err != nil {
@@ -115,7 +125,7 @@ func (s *AuthService) issueTokens(ctx context.Context, userId uuid.UUID) (*issue
 	}
 
 	refreshTokenHash := sha256.Sum256([]byte(refreshToken))
-	if s.tokenRepository.CreateRefreshToken(ctx, userId, fmt.Sprintf("%x", refreshTokenHash[:]), refreshTolenExpiresAt) != nil {
+	if s.tokenRepository.CreateRefreshToken(ctx, userId, fmt.Sprintf("%x", refreshTokenHash[:]), refreshTokenExpiresAt) != nil {
 		return nil, &AppError{Code: 500, Message: "failed to store refresh token"}
 	}
 
@@ -125,17 +135,14 @@ func (s *AuthService) issueTokens(ctx context.Context, userId uuid.UUID) (*issue
 	}, nil
 }
 
-func (a *AuthService) parseRefresh(token string) (*jwt.RegisteredClaims, error) {
+func (a *AuthService) parseRefresh(token string) (*tokenClaims, error) {
+	claims := &tokenClaims{}
 	parsed, err := jwt.ParseWithClaims(
 		token,
-		&jwt.RegisteredClaims{},
+		claims,
 		func(t *jwt.Token) (any, error) { return a.jwtSecret, nil },
 	)
 	if err != nil || !parsed.Valid {
-		return nil, err
-	}
-	claims, ok := parsed.Claims.(*jwt.RegisteredClaims)
-	if !ok {
 		return nil, err
 	}
 	return claims, nil
