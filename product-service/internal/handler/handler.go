@@ -26,10 +26,21 @@ func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
 	admin.POST("/categories", h.createCategory)
 }
 
-func (h *APIHandler) getProducts(c *gin.Context)    {}
+func (h *APIHandler) getProducts(c *gin.Context) {
+	products, err := h.s.GetProducts(c.Request.Context())
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to fetch products"})
+		return
+	}
+	c.JSON(200, products)
+}
+
 func (h *APIHandler) getProductById(c *gin.Context) {}
-func (h *APIHandler) createProduct(c *gin.Context)  {}
-func (h *APIHandler) updateProduct(c *gin.Context)  {}
-func (h *APIHandler) deleteProduct(c *gin.Context)  {}
+
+func (h *APIHandler) createProduct(c *gin.Context) {}
+
+func (h *APIHandler) updateProduct(c *gin.Context) {}
+
+func (h *APIHandler) deleteProduct(c *gin.Context) {}
 
 func (h *APIHandler) createCategory(c *gin.Context) {}
