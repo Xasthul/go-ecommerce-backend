@@ -8,6 +8,7 @@ type config struct {
 	Port              string
 	AuthServiceURL    string
 	ProductServiceURL string
+	JwtSecret         string
 }
 
 func LoadEnv() config {
@@ -15,5 +16,6 @@ func LoadEnv() config {
 		Port:              os.Getenv("PORT"),
 		AuthServiceURL:    os.Getenv("AUTH_SERVICE_URL"),
 		ProductServiceURL: os.Getenv("PRODUCT_SERVICE_URL"),
+		JwtSecret:         os.Getenv("JWT_SECRET"),
 	}
 }

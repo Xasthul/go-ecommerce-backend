@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Xasthul/go-ecomerce-backend/api-gateway/internal/config"
+	"github.com/Xasthul/go-ecomerce-backend/api-gateway/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,10 +28,12 @@ func main() {
 	productService := createReverseProxy(cfg.ProductServiceURL)
 	r.GET("/products", gin.WrapH(productService))
 	r.GET("/products/*proxyPath", gin.WrapH(productService))
-	r.POST("/admin/products", gin.WrapH(productService))
-	r.PUT("/admin/products/*proxyPath", gin.WrapH(productService))
-	r.DELETE("/admin/products/*proxyPath", gin.WrapH(productService))
-	r.POST("/admin/categories", gin.WrapH(productService))
+
+	loggedIn := r.Group("/admin", middleware.AuthMiddleware(cfg.JwtSecret))
+	loggedIn.POST("/products", gin.WrapH(productService))
+	loggedIn.PUT("/products/*proxyPath", gin.WrapH(productService))
+	loggedIn.DELETE("/products/*proxyPath", gin.WrapH(productService))
+	loggedIn.POST("/categories", gin.WrapH(productService))
 
 	r.Run(":" + cfg.Port)
 }
