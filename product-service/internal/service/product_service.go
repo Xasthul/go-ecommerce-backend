@@ -5,6 +5,7 @@ import (
 
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
 	db "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
+	"github.com/google/uuid"
 )
 
 type ProductService struct {
@@ -24,4 +25,8 @@ func NewProductService(
 
 func (s *ProductService) GetProducts(ctx context.Context) ([]db.Product, error) {
 	return s.productRepository.GetProducts(ctx)
+}
+
+func (s *ProductService) GetProductById(ctx context.Context, productId uuid.UUID) (*db.Product, error) {
+	return s.productRepository.GetProductById(ctx, productId)
 }

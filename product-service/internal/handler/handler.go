@@ -4,6 +4,7 @@ import (
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/middleware"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type APIHandler struct {
@@ -35,7 +36,23 @@ func (h *APIHandler) getProducts(c *gin.Context) {
 	c.JSON(200, products)
 }
 
-func (h *APIHandler) getProductById(c *gin.Context) {}
+type getProductByIdRequest struct {
+	ProductId uuid.UUID `json:"productId" binding:"required,uuid"`
+}
+
+func (h *APIHandler) getProductById(c *gin.Context) {
+	var req getProductByIdRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+	product, err := h.s.GetProductById(c.Request.Context(), req.ProductId)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to fetch product"})
+		return
+	}
+	c.JSON(200, product)
+}
 
 func (h *APIHandler) createProduct(c *gin.Context) {}
 
