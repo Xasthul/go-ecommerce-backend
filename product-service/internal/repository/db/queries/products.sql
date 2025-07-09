@@ -40,3 +40,7 @@ SET
     stock       = COALESCE(sqlc.narg('stock')::int4,         stock),
     updated_at = now()
 WHERE id = sqlc.arg('id')::uuid;
+
+-- name: DeleteProduct :exec
+DELETE FROM products
+WHERE id = sqlc.arg('id')::uuid;

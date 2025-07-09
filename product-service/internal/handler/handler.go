@@ -149,7 +149,30 @@ func (h *APIHandler) updateProduct(c *gin.Context) {
 	c.Status(204)
 }
 
-func (h *APIHandler) deleteProduct(c *gin.Context) {}
+type deleteProductURI struct {
+	ProductId string `uri:"id" binding:"required,uuid"`
+}
+
+func (h *APIHandler) deleteProduct(c *gin.Context) {
+	var uri deleteProductURI
+	if err := c.ShouldBindUri(&uri); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	productId, err := uuid.Parse(uri.ProductId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid UUID format"})
+		return
+	}
+
+	err = h.productService.DeleteProduct(c.Request.Context(), productId)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to delete product"})
+		return
+	}
+	c.Status(200)
+}
 
 type createCategoryBody struct {
 	Name string `json:"category_name" binding:"required"`

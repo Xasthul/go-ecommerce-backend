@@ -69,3 +69,7 @@ func (s *ProductService) UpdateProduct(
 		stock,
 	)
 }
+
+func (s *ProductService) DeleteProduct(ctx context.Context, productId uuid.UUID) error {
+	return s.productRepository.DeleteProduct(ctx, productId)
+}

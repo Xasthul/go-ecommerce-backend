@@ -118,3 +118,7 @@ func (r *ProductRepository) UpdateProduct(
 
 	return r.q.UpdateProduct(ctx, params)
 }
+
+func (r *ProductRepository) DeleteProduct(ctx context.Context, productId uuid.UUID) error {
+	return r.q.DeleteProduct(ctx, productId)
+}
