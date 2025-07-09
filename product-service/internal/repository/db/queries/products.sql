@@ -25,3 +25,18 @@ WHERE id = $1;
 -- name: GetProducts :many
 SELECT * 
 FROM products;
+
+-- name: UpdateProduct :exec
+UPDATE products
+SET
+    category_id = COALESCE(sqlc.narg('category_id')::int2,   category_id),
+    name        = COALESCE(sqlc.narg('name'),                name),
+    description = COALESCE(sqlc.narg('description')::text,   description),
+    price_cents = COALESCE(sqlc.narg('price_cents'),         price_cents),
+    currency    = COALESCE(
+                     sqlc.narg('currency')::char(3),
+                     currency
+                 ),
+    stock       = COALESCE(sqlc.narg('stock')::int4,         stock),
+    updated_at = now()
+WHERE id = sqlc.arg('id')::uuid;

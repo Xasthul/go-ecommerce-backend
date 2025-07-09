@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/middleware"
@@ -31,7 +30,7 @@ func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
 
 	admin := r.Group("/admin", middleware.AdminOnly())
 	admin.POST("/products", h.createProduct)
-	admin.PUT("/products/:id", h.updateProduct)
+	admin.PATCH("/products/:id", h.updateProduct)
 	admin.DELETE("/products/:id", h.deleteProduct)
 
 	admin.POST("/categories", h.createCategory)
@@ -53,7 +52,6 @@ type getProductByIdURI struct {
 func (h *APIHandler) getProductById(c *gin.Context) {
 	var req getProductByIdURI
 	if err := c.ShouldBindUri(&req); err != nil {
-		fmt.Println("Error binding URI:", err)
 		c.JSON(400, gin.H{"error": "Invalid request"})
 		return
 	}
@@ -104,7 +102,52 @@ func (h *APIHandler) createProduct(c *gin.Context) {
 	c.Status(201)
 }
 
-func (h *APIHandler) updateProduct(c *gin.Context) {}
+type updateProductURI struct {
+	ProductId string `uri:"id" binding:"required,uuid"`
+}
+
+type updateProductBody struct {
+	CategoryID  *int16  `json:"category_id,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	PriceCents  *int32  `json:"price_cents,omitempty"  binding:"omitempty,gt=0"`
+	Currency    *string `json:"currency,omitempty"  binding:"omitempty,len=3"`
+	Stock       *int32  `json:"stock,omitempty"`
+}
+
+func (h *APIHandler) updateProduct(c *gin.Context) {
+	var uri updateProductURI
+	var req updateProductBody
+	if err := c.ShouldBindUri(&uri); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+	productId, err := uuid.Parse(uri.ProductId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid UUID format"})
+		return
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	err = h.productService.UpdateProduct(
+		c.Request.Context(),
+		productId,
+		req.CategoryID,
+		req.Name,
+		req.Description,
+		req.PriceCents,
+		req.Currency,
+		req.Stock,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to update product"})
+		return
+	}
+	c.Status(204)
+}
 
 func (h *APIHandler) deleteProduct(c *gin.Context) {}
 

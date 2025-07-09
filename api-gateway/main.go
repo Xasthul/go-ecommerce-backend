@@ -31,7 +31,7 @@ func main() {
 
 	loggedIn := r.Group("/admin", middleware.AuthMiddleware(cfg.JwtSecret))
 	loggedIn.POST("/products", gin.WrapH(productService))
-	loggedIn.PUT("/products/*proxyPath", gin.WrapH(productService))
+	loggedIn.PATCH("/products/*proxyPath", gin.WrapH(productService))
 	loggedIn.DELETE("/products/*proxyPath", gin.WrapH(productService))
 	loggedIn.POST("/categories", gin.WrapH(productService))
 

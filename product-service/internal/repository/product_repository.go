@@ -5,6 +5,7 @@ import (
 
 	gen "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ProductRepository struct {
@@ -56,4 +57,55 @@ func (r *ProductRepository) CreateProduct(
 	}
 
 	return r.q.CreateProduct(ctx, params)
+}
+
+func (r *ProductRepository) UpdateProduct(
+	ctx context.Context,
+	productId uuid.UUID,
+	categoryID *int16,
+	name *string,
+	description *string,
+	priceCents *int32,
+	currency *string,
+	stock *int32,
+) error {
+	params := gen.UpdateProductParams{ID: productId}
+
+	if categoryID != nil {
+		params.CategoryID = pgtype.Int2{Int16: *categoryID, Valid: true}
+	} else {
+		params.CategoryID = pgtype.Int2{Valid: false}
+	}
+
+	if name != nil {
+		params.Name = pgtype.Text{String: *name, Valid: true}
+	} else {
+		params.Name = pgtype.Text{Valid: false}
+	}
+
+	if description != nil {
+		params.Description = pgtype.Text{String: *description, Valid: true}
+	} else {
+		params.Description = pgtype.Text{Valid: false}
+	}
+
+	if priceCents != nil {
+		params.PriceCents = pgtype.Int4{Int32: *priceCents, Valid: true}
+	} else {
+		params.PriceCents = pgtype.Int4{Valid: false}
+	}
+
+	if currency != nil {
+		params.Currency = pgtype.Text{String: *currency, Valid: true}
+	} else {
+		params.Currency = pgtype.Text{Valid: false}
+	}
+
+	if stock != nil {
+		params.Stock = pgtype.Int4{Int32: *stock, Valid: true}
+	} else {
+		params.Stock = pgtype.Int4{Valid: false}
+	}
+
+	return r.q.UpdateProduct(ctx, params)
 }

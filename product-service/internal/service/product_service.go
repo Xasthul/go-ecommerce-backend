@@ -47,3 +47,25 @@ func (s *ProductService) CreateProduct(
 		stock,
 	)
 }
+
+func (s *ProductService) UpdateProduct(
+	ctx context.Context,
+	productId uuid.UUID,
+	categoryID *int16,
+	name *string,
+	description *string,
+	priceCents *int32,
+	currency *string,
+	stock *int32,
+) error {
+	return s.productRepository.UpdateProduct(
+		ctx,
+		productId,
+		categoryID,
+		name,
+		description,
+		priceCents,
+		currency,
+		stock,
+	)
+}
