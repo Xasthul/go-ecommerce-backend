@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/middleware"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/service"
 	"github.com/gin-gonic/gin"
@@ -43,17 +46,25 @@ func (h *APIHandler) getProducts(c *gin.Context) {
 	c.JSON(200, products)
 }
 
-type getProductByIdRequest struct {
-	ProductId uuid.UUID `json:"productId" binding:"required,uuid"`
+type getProductByIdURI struct {
+	ProductId string `uri:"id" binding:"required,uuid"`
 }
 
 func (h *APIHandler) getProductById(c *gin.Context) {
-	var req getProductByIdRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var req getProductByIdURI
+	if err := c.ShouldBindUri(&req); err != nil {
+		fmt.Println("Error binding URI:", err)
 		c.JSON(400, gin.H{"error": "Invalid request"})
 		return
 	}
-	product, err := h.productService.GetProductById(c.Request.Context(), req.ProductId)
+
+	id, err := uuid.Parse(req.ProductId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid UUID format"})
+		return
+	}
+
+	product, err := h.productService.GetProductById(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to fetch product"})
 		return
@@ -61,7 +72,7 @@ func (h *APIHandler) getProductById(c *gin.Context) {
 	c.JSON(200, product)
 }
 
-type createProductRequest struct {
+type createProductBody struct {
 	CategoryID  int16   `json:"category_id" binding:"required"`
 	Name        string  `json:"name"         binding:"required"`
 	Description *string `json:"description,omitempty"`
@@ -71,7 +82,7 @@ type createProductRequest struct {
 }
 
 func (h *APIHandler) createProduct(c *gin.Context) {
-	var req createProductRequest
+	var req createProductBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request"})
 		return
@@ -97,12 +108,12 @@ func (h *APIHandler) updateProduct(c *gin.Context) {}
 
 func (h *APIHandler) deleteProduct(c *gin.Context) {}
 
-type createCategoryRequest struct {
+type createCategoryBody struct {
 	Name string `json:"category_name" binding:"required"`
 }
 
 func (h *APIHandler) createCategory(c *gin.Context) {
-	var req createCategoryRequest
+	var req createCategoryBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request"})
 		return

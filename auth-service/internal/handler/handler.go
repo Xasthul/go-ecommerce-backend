@@ -31,13 +31,13 @@ func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/refresh", h.refreshTokens)
 }
 
-type registerRequest struct {
+type registerBody struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 }
 
 func (h *APIHandler) registerUser(c *gin.Context) {
-	var req registerRequest
+	var req registerBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -50,13 +50,13 @@ func (h *APIHandler) registerUser(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-type loginRequest struct {
+type loginBody struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
 func (h *APIHandler) login(c *gin.Context) {
-	var req loginRequest
+	var req loginBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -72,12 +72,12 @@ func (h *APIHandler) login(c *gin.Context) {
 	})
 }
 
-type refreshRequest struct {
+type refreshBody struct {
 	RefreshToken string `json:"refresh_token" binding:"required,jwt"`
 }
 
 func (h *APIHandler) refreshTokens(c *gin.Context) {
-	var req refreshRequest
+	var req refreshBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
