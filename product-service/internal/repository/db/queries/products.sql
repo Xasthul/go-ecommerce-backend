@@ -11,10 +11,10 @@ INSERT INTO products (
     gen_random_uuid(),  
     sqlc.arg('category_id')::int2,
     sqlc.arg('name'),
-    sqlc.arg('description')::text,
+    sqlc.narg('description')::text,
     sqlc.arg('price_cents'),
-    COALESCE(NULLIF(sqlc.arg('currency'), '')::char(3), 'EUR'),
-    COALESCE(sqlc.arg('stock')::int4, 0)
+    COALESCE(sqlc.narg('currency')::char(3), 'EUR'),
+    COALESCE(sqlc.narg('stock')::int4, 0)
 );
 
 -- name: GetProductByID :one

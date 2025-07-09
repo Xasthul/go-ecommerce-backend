@@ -46,14 +46,23 @@ func (r *ProductRepository) CreateProduct(
 		Name:       name,
 		PriceCents: priceCents,
 	}
+
 	if description != nil {
-		params.Description = *description
+		params.Description = pgtype.Text{String: *description, Valid: true}
+	} else {
+		params.Description = pgtype.Text{Valid: false}
 	}
+
 	if currency != nil {
-		params.Currency = *currency
+		params.Currency = pgtype.Text{String: *currency, Valid: true}
+	} else {
+		params.Currency = pgtype.Text{Valid: false}
 	}
+
 	if stock != nil {
-		params.Stock = *stock
+		params.Stock = pgtype.Int4{Int32: *stock, Valid: true}
+	} else {
+		params.Stock = pgtype.Int4{Valid: false}
 	}
 
 	return r.q.CreateProduct(ctx, params)
