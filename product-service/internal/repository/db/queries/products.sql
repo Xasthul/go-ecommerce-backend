@@ -8,13 +8,13 @@ INSERT INTO products (
     currency,
     stock
 ) VALUES (
-    gen_random_uuid(),  -- id
-    $1,                  -- category_id
-    $2,                  -- name
-    $3,                  -- description
-    $4,                  -- price_cents
-    COALESCE($5, 'EUR'), -- currency (default to EUR)
-    COALESCE($6, 0)      -- stock (default to 0)
+    gen_random_uuid(),  
+    sqlc.arg('category_id')::int2,
+    sqlc.arg('name'),
+    sqlc.arg('description')::text,
+    sqlc.arg('price_cents'),
+    COALESCE(NULLIF(sqlc.arg('currency'), '')::char(3), 'EUR'),
+    COALESCE(sqlc.arg('stock')::int4, 0)
 );
 
 -- name: GetProductByID :one

@@ -30,3 +30,30 @@ func (r *ProductRepository) GetProductById(ctx context.Context, productId uuid.U
 	}
 	return &product, nil
 }
+
+func (r *ProductRepository) CreateProduct(
+	ctx context.Context,
+	categoryID int16,
+	name string,
+	description *string,
+	priceCents int32,
+	currency *string,
+	stock *int32,
+) error {
+	params := gen.CreateProductParams{
+		CategoryID: categoryID,
+		Name:       name,
+		PriceCents: priceCents,
+	}
+	if description != nil {
+		params.Description = *description
+	}
+	if currency != nil {
+		params.Currency = *currency
+	}
+	if stock != nil {
+		params.Stock = *stock
+	}
+
+	return r.q.CreateProduct(ctx, params)
+}

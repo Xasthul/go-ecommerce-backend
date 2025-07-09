@@ -27,3 +27,23 @@ func (s *ProductService) GetProducts(ctx context.Context) ([]db.Product, error) 
 func (s *ProductService) GetProductById(ctx context.Context, productId uuid.UUID) (*db.Product, error) {
 	return s.productRepository.GetProductById(ctx, productId)
 }
+
+func (s *ProductService) CreateProduct(
+	ctx context.Context,
+	categoryID int16,
+	name string,
+	description *string,
+	priceCents int32,
+	currency *string,
+	stock *int32,
+) error {
+	return s.productRepository.CreateProduct(
+		ctx,
+		categoryID,
+		name,
+		description,
+		priceCents,
+		currency,
+		stock,
+	)
+}

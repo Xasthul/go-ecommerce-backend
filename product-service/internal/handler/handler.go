@@ -61,7 +61,37 @@ func (h *APIHandler) getProductById(c *gin.Context) {
 	c.JSON(200, product)
 }
 
-func (h *APIHandler) createProduct(c *gin.Context) {}
+type createProductRequest struct {
+	CategoryID  int16   `json:"category_id" binding:"required"`
+	Name        string  `json:"name"         binding:"required"`
+	Description *string `json:"description,omitempty"`
+	PriceCents  int32   `json:"price_cents"  binding:"required,gt=0"`
+	Currency    *string `json:"currency,omitempty"  binding:"omitempty,len=3"`
+	Stock       *int32  `json:"stock,omitempty"`
+}
+
+func (h *APIHandler) createProduct(c *gin.Context) {
+	var req createProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	err := h.productService.CreateProduct(
+		c.Request.Context(),
+		req.CategoryID,
+		req.Name,
+		req.Description,
+		req.PriceCents,
+		req.Currency,
+		req.Stock,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to create product"})
+		return
+	}
+	c.Status(201)
+}
 
 func (h *APIHandler) updateProduct(c *gin.Context) {}
 
