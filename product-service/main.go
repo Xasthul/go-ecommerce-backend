@@ -31,11 +31,9 @@ func main() {
 	queries := gen.New(db)
 	productRepository := repository.NewProductRepository(queries)
 	categoryRepository := repository.NewCategoryRepository(queries)
-	productService := service.NewProductService(
-		productRepository,
-		categoryRepository,
-	)
-	apiHandler := handler.NewAPIHandler(productService)
+	productService := service.NewProductService(productRepository)
+	categorytService := service.NewCategoryService(categoryRepository)
+	apiHandler := handler.NewAPIHandler(productService, categorytService)
 
 	r := gin.Default()
 	r.Use(gin.Recovery())

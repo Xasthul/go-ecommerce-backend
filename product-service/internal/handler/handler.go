@@ -8,11 +8,18 @@ import (
 )
 
 type APIHandler struct {
-	s *service.ProductService
+	productService  *service.ProductService
+	categoryService *service.CategoryService
 }
 
-func NewAPIHandler(s *service.ProductService) *APIHandler {
-	return &APIHandler{s: s}
+func NewAPIHandler(
+	productService *service.ProductService,
+	categoryService *service.CategoryService,
+) *APIHandler {
+	return &APIHandler{
+		productService:  productService,
+		categoryService: categoryService,
+	}
 }
 
 func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
@@ -28,7 +35,7 @@ func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
 }
 
 func (h *APIHandler) getProducts(c *gin.Context) {
-	products, err := h.s.GetProducts(c.Request.Context())
+	products, err := h.productService.GetProducts(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to fetch products"})
 		return
@@ -46,7 +53,7 @@ func (h *APIHandler) getProductById(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "Invalid request"})
 		return
 	}
-	product, err := h.s.GetProductById(c.Request.Context(), req.ProductId)
+	product, err := h.productService.GetProductById(c.Request.Context(), req.ProductId)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to fetch product"})
 		return
@@ -60,4 +67,21 @@ func (h *APIHandler) updateProduct(c *gin.Context) {}
 
 func (h *APIHandler) deleteProduct(c *gin.Context) {}
 
-func (h *APIHandler) createCategory(c *gin.Context) {}
+type createCategoryRequest struct {
+	Name string `json:"category_name" binding:"required"`
+}
+
+func (h *APIHandler) createCategory(c *gin.Context) {
+	var req createCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	category, err := h.categoryService.CreateCategory(c.Request.Context(), req.Name)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to create category"})
+		return
+	}
+	c.JSON(201, category)
+}

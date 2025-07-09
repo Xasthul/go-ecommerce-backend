@@ -9,17 +9,14 @@ import (
 )
 
 type ProductService struct {
-	productRepository  *repository.ProductRepository
-	categoryRepository *repository.CategoryRepository
+	productRepository *repository.ProductRepository
 }
 
 func NewProductService(
 	productRepository *repository.ProductRepository,
-	categoryRepository *repository.CategoryRepository,
 ) *ProductService {
 	return &ProductService{
-		productRepository:  productRepository,
-		categoryRepository: categoryRepository,
+		productRepository: productRepository,
 	}
 }
 
