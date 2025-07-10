@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/rabbitmq"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
 	db "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
 	"github.com/google/uuid"
@@ -72,4 +73,8 @@ func (s *ProductService) UpdateProduct(
 
 func (s *ProductService) DeleteProduct(ctx context.Context, productId uuid.UUID) error {
 	return s.productRepository.DeleteProduct(ctx, productId)
+}
+
+func (s *ProductService) ReserveStock(ctx context.Context, payload *rabbitmq.OrderCreatedEvent) {
+
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/config"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/handler"
+	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/rabbitmq"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
 	gen "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/service"
@@ -14,13 +15,13 @@ import (
 	_ "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
 	cfg := config.LoadEnv()
 
 	databaseURL := cfg.DatabaseURL
-
 	db, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
 		log.Fatal("connect postgres: ", err)
@@ -34,6 +35,13 @@ func main() {
 	productService := service.NewProductService(productRepository)
 	categorytService := service.NewCategoryService(categoryRepository)
 	apiHandler := handler.NewApiHandler(productService, categorytService)
+
+	rabbitConn, err := amqp.Dial(cfg.RabbitMqUrl)
+	if err != nil {
+		log.Fatal("connect rabbitmq: ", err)
+	}
+	defer rabbitConn.Close()
+	consumeRabbitMqEvents(rabbitConn, productService)
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
@@ -53,4 +61,13 @@ func runMigrations(databaseURL string) {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 	log.Println("database migrated successfully")
+}
+
+func consumeRabbitMqEvents(rabbitConn *amqp.Connection, productService *service.ProductService) {
+	err := rabbitmq.ConsumeOrders(rabbitConn, func(event *rabbitmq.OrderCreatedEvent) {
+		productService.ReserveStock(context.Background(), event)
+	})
+	if err != nil {
+		log.Fatal("consumer orders: ", err)
+	}
 }
