@@ -16,7 +16,6 @@ func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
 		"orders",
