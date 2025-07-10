@@ -7,6 +7,7 @@ import (
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/config"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/handler"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/rabbitmq"
+	redisdb "github.com/Xasthul/go-ecommerce-backend/product-service/internal/redis"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
 	gen "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/service"
@@ -21,6 +22,11 @@ import (
 func main() {
 	cfg := config.LoadEnv()
 
+	redisClient, err := redisdb.InitRedis(cfg.RedisAddress, cfg.RedisPassword)
+	if err != nil {
+		log.Fatal("connect redis: ", err)
+	}
+
 	databaseURL := cfg.DatabaseURL
 	db, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
@@ -32,7 +38,7 @@ func main() {
 	queries := gen.New(db)
 	productRepository := repository.NewProductRepository(queries)
 	categoryRepository := repository.NewCategoryRepository(queries)
-	productService := service.NewProductService(productRepository)
+	productService := service.NewProductService(productRepository, redisClient)
 	categorytService := service.NewCategoryService(categoryRepository)
 	apiHandler := handler.NewApiHandler(productService, categorytService)
 

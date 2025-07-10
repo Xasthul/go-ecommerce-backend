@@ -77,7 +77,7 @@ func (r *ProductRepository) UpdateProduct(
 	priceCents *int32,
 	currency *string,
 	stock *int32,
-) error {
+) (*gen.Product, error) {
 	params := gen.UpdateProductParams{ID: productId}
 
 	if categoryID != nil {
@@ -116,7 +116,11 @@ func (r *ProductRepository) UpdateProduct(
 		params.Stock = pgtype.Int4{Valid: false}
 	}
 
-	return r.q.UpdateProduct(ctx, params)
+	product, err := r.q.UpdateProduct(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 
 func (r *ProductRepository) DeleteProduct(ctx context.Context, productId uuid.UUID) error {
@@ -127,9 +131,13 @@ func (r *ProductRepository) DecreaseStock(
 	ctx context.Context,
 	productId uuid.UUID,
 	quantity int,
-) (int64, error) {
-	return r.q.DecreaseStock(ctx, gen.DecreaseStockParams{
+) (*gen.Product, error) {
+	product, err := r.q.DecreaseStock(ctx, gen.DecreaseStockParams{
 		ID:    productId,
 		Stock: int32(quantity),
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }

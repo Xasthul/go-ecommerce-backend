@@ -2,22 +2,29 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/rabbitmq"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
 	db "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type ProductService struct {
 	productRepository *repository.ProductRepository
+	redisClient       *redis.Client
 }
 
 func NewProductService(
 	productRepository *repository.ProductRepository,
+	redisClient *redis.Client,
 ) *ProductService {
 	return &ProductService{
 		productRepository: productRepository,
+		redisClient:       redisClient,
 	}
 }
 
@@ -26,7 +33,19 @@ func (s *ProductService) GetProducts(ctx context.Context) ([]db.Product, error) 
 }
 
 func (s *ProductService) GetProductById(ctx context.Context, productId uuid.UUID) (*db.Product, error) {
-	return s.productRepository.GetProductById(ctx, productId)
+	cachedProduct, err := s.getCachedProduct(ctx, productId)
+	if err == nil {
+		return cachedProduct, nil
+	}
+
+	product, err := s.productRepository.GetProductById(ctx, productId)
+	if err != nil {
+		return nil, err
+	}
+
+	s.cacheProduct(ctx, product)
+
+	return product, nil
 }
 
 func (s *ProductService) CreateProduct(
@@ -59,7 +78,7 @@ func (s *ProductService) UpdateProduct(
 	currency *string,
 	stock *int32,
 ) error {
-	return s.productRepository.UpdateProduct(
+	product, err := s.productRepository.UpdateProduct(
 		ctx,
 		productId,
 		categoryID,
@@ -69,15 +88,61 @@ func (s *ProductService) UpdateProduct(
 		currency,
 		stock,
 	)
+	if err != nil {
+		return err
+	}
+
+	s.cacheProduct(ctx, product)
+
+	return nil
 }
 
 func (s *ProductService) DeleteProduct(ctx context.Context, productId uuid.UUID) error {
-	return s.productRepository.DeleteProduct(ctx, productId)
+	err := s.productRepository.DeleteProduct(ctx, productId)
+	if err != nil {
+		return err
+	}
+
+	s.clearCacheForProduct(ctx, productId)
+
+	return nil
 }
 
 func (s *ProductService) DecreaseStock(ctx context.Context, payload *rabbitmq.OrderCreatedEvent) {
-	rowsImpacted, err := s.productRepository.DecreaseStock(ctx, payload.ProductID, payload.Quantity)
-	if err != nil || rowsImpacted <= 0 {
+	product, err := s.productRepository.DecreaseStock(ctx, payload.ProductID, payload.Quantity)
+	if err != nil || product == nil {
 		// handle failed to decrease stock
+		return
 	}
+
+	s.cacheProduct(ctx, product)
+}
+
+func (s *ProductService) cacheProduct(ctx context.Context, product *db.Product) {
+	cacheKey := s.getProductCacheKey(product.ID)
+
+	bytes, _ := json.Marshal(product)
+	s.redisClient.Set(ctx, cacheKey, bytes, 10*time.Minute)
+}
+
+func (s *ProductService) getCachedProduct(ctx context.Context, productId uuid.UUID) (*db.Product, error) {
+	cacheKey := s.getProductCacheKey(productId)
+
+	cached, err := s.redisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var product db.Product
+		_ = json.Unmarshal([]byte(cached), &product)
+		return &product, nil
+	}
+	return nil, err
+}
+
+func (s *ProductService) clearCacheForProduct(ctx context.Context, productId uuid.UUID) {
+	cacheKey := s.getProductCacheKey(productId)
+
+	s.redisClient.Del(ctx, cacheKey)
+}
+
+func (s *ProductService) getProductCacheKey(productId uuid.UUID) string {
+	return fmt.Sprintf("product:%s", productId)
 }

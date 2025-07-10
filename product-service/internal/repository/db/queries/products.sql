@@ -26,7 +26,7 @@ WHERE id = $1;
 SELECT * 
 FROM products;
 
--- name: UpdateProduct :exec
+-- name: UpdateProduct :one
 UPDATE products
 SET
     category_id = COALESCE(sqlc.narg('category_id')::int2,   category_id),
@@ -39,13 +39,15 @@ SET
                  ),
     stock       = COALESCE(sqlc.narg('stock')::int4,         stock),
     updated_at = now()
-WHERE id = sqlc.arg('id')::uuid;
+WHERE id = sqlc.arg('id')::uuid
+RETURNING *;
 
 -- name: DeleteProduct :exec
 DELETE FROM products
 WHERE id = sqlc.arg('id')::uuid;
 
--- name: DecreaseStock :execrows
+-- name: DecreaseStock :one
 UPDATE products
 SET stock = stock - $2
-WHERE id = $1 AND stock >= $2;
+WHERE id = $1 AND stock >= $2
+RETURNING *;
