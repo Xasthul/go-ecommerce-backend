@@ -3,13 +3,14 @@ package rabbitmq
 import (
 	"encoding/json"
 
+	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type OrderCreatedEvent struct {
-	OrderID   string `json:"order_id"`
-	ProductID string `json:"product_id"`
-	Quantity  int    `json:"quantity"`
+	OrderID   uuid.UUID `json:"order_id"`
+	ProductID uuid.UUID `json:"product_id"`
+	Quantity  int       `json:"quantity"`
 }
 
 func ConsumeOrders(conn *amqp.Connection, handle func(*OrderCreatedEvent)) error {

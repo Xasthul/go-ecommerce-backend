@@ -64,9 +64,11 @@ func runMigrations(databaseURL string) {
 }
 
 func consumeRabbitMqEvents(rabbitConn *amqp.Connection, productService *service.ProductService) {
-	err := rabbitmq.ConsumeOrders(rabbitConn, func(event *rabbitmq.OrderCreatedEvent) {
-		productService.ReserveStock(context.Background(), event)
-	})
+	err := rabbitmq.ConsumeOrders(
+		rabbitConn,
+		func(event *rabbitmq.OrderCreatedEvent) {
+			productService.DecreaseStock(context.Background(), event)
+		})
 	if err != nil {
 		log.Fatal("consumer orders: ", err)
 	}

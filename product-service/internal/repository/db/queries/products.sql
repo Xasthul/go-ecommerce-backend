@@ -44,3 +44,8 @@ WHERE id = sqlc.arg('id')::uuid;
 -- name: DeleteProduct :exec
 DELETE FROM products
 WHERE id = sqlc.arg('id')::uuid;
+
+-- name: DecreaseStock :execrows
+UPDATE products
+SET stock = stock - $2
+WHERE id = $1 AND stock >= $2;

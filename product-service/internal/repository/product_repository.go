@@ -122,3 +122,14 @@ func (r *ProductRepository) UpdateProduct(
 func (r *ProductRepository) DeleteProduct(ctx context.Context, productId uuid.UUID) error {
 	return r.q.DeleteProduct(ctx, productId)
 }
+
+func (r *ProductRepository) DecreaseStock(
+	ctx context.Context,
+	productId uuid.UUID,
+	quantity int,
+) (int64, error) {
+	return r.q.DecreaseStock(ctx, gen.DecreaseStockParams{
+		ID:    productId,
+		Stock: int32(quantity),
+	})
+}

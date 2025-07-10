@@ -75,6 +75,9 @@ func (s *ProductService) DeleteProduct(ctx context.Context, productId uuid.UUID)
 	return s.productRepository.DeleteProduct(ctx, productId)
 }
 
-func (s *ProductService) ReserveStock(ctx context.Context, payload *rabbitmq.OrderCreatedEvent) {
-
+func (s *ProductService) DecreaseStock(ctx context.Context, payload *rabbitmq.OrderCreatedEvent) {
+	rowsImpacted, err := s.productRepository.DecreaseStock(ctx, payload.ProductID, payload.Quantity)
+	if err != nil || rowsImpacted <= 0 {
+		// handle failed to decrease stock
+	}
 }
