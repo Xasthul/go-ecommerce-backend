@@ -41,6 +41,11 @@ func main() {
 		admin.POST("/categories", gin.WrapH(productService))
 	}
 
+	orderService := createReverseProxy(cfg.OrderServiceURL)
+	{
+		r.POST("/orders", gin.WrapH(orderService))
+	}
+
 	r.Run(":" + cfg.Port)
 }
 
