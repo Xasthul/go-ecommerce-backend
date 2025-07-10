@@ -31,19 +31,24 @@ func (h *ApiHandler) RegisterRoutes(r *gin.Engine) {
 }
 
 type createOrderBody struct {
-	UserId    string `json:"user_id" binding:"required,uuid"`
 	ProductId string `json:"product_id" binding:"required,uuid"`
 	Quantity  int    `json:"quantity"         binding:"required,gt=0"`
 }
 
 func (h *ApiHandler) CreateOrder(c *gin.Context) {
+	userIdFromHeader := c.GetHeader("X-User-Id")
+	if userIdFromHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing user ID"})
+		return
+	}
+
 	var req createOrderBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
-	userId, err := uuid.Parse(req.UserId)
+	userId, err := uuid.Parse(userIdFromHeader)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid UUID format"})
 		return
