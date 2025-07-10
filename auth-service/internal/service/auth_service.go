@@ -41,7 +41,7 @@ type AppError struct {
 }
 
 func (e *AppError) Error() string {
-	return fmt.Sprintf("%d - %s", e.Code, e.Message)
+	return e.Message
 }
 
 type tokenClaims struct {
