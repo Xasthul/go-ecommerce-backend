@@ -7,15 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type APIHandler struct {
+type ApiHandler struct {
 	s *service.AuthService
 }
 
-func NewAPIHandler(s *service.AuthService) *APIHandler {
-	return &APIHandler{s: s}
+func NewApiHandler(s *service.AuthService) *ApiHandler {
+	return &ApiHandler{s: s}
 }
 
-func (h *APIHandler) respondWithAppError(c *gin.Context, err error) {
+func (h *ApiHandler) respondWithAppError(c *gin.Context, err error) {
 	if appErr, ok := err.(*service.AppError); ok {
 		c.JSON(appErr.Code, gin.H{"error": appErr.Error()})
 		return
@@ -25,7 +25,7 @@ func (h *APIHandler) respondWithAppError(c *gin.Context, err error) {
 	}
 }
 
-func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
+func (h *ApiHandler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/register", h.registerUser)
 	r.POST("/login", h.login)
 	r.POST("/refresh", h.refreshTokens)
@@ -36,7 +36,7 @@ type registerBody struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
-func (h *APIHandler) registerUser(c *gin.Context) {
+func (h *ApiHandler) registerUser(c *gin.Context) {
 	var req registerBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -55,7 +55,7 @@ type loginBody struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func (h *APIHandler) login(c *gin.Context) {
+func (h *ApiHandler) login(c *gin.Context) {
 	var req loginBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -76,7 +76,7 @@ type refreshBody struct {
 	RefreshToken string `json:"refresh_token" binding:"required,jwt"`
 }
 
-func (h *APIHandler) refreshTokens(c *gin.Context) {
+func (h *ApiHandler) refreshTokens(c *gin.Context) {
 	var req refreshBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

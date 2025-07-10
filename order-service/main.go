@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/config"
-	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/handler"
-	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
-	gen "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
-	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/service"
+	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/config"
+	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/handler"
+	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/repository"
+	gen "github.com/Xasthul/go-ecommerce-backend/order-service/internal/repository/db/gen"
+	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/postgres"
@@ -29,11 +29,9 @@ func main() {
 	runMigrations(databaseURL)
 
 	queries := gen.New(db)
-	productRepository := repository.NewProductRepository(queries)
-	categoryRepository := repository.NewCategoryRepository(queries)
-	productService := service.NewProductService(productRepository)
-	categorytService := service.NewCategoryService(categoryRepository)
-	apiHandler := handler.NewApiHandler(productService, categorytService)
+	orderRepository := repository.NewOrderRepository(queries)
+	orderService := service.NewOrderService(orderRepository)
+	apiHandler := handler.NewApiHandler(orderService)
 
 	r := gin.Default()
 	r.Use(gin.Recovery())

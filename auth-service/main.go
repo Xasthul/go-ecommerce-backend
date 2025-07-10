@@ -38,7 +38,7 @@ func main() {
 		cfg.AccessTokenTTL,
 		cfg.RefreshTokenTTL,
 	)
-	apiHandler := handler.NewAPIHandler(authService)
+	apiHandler := handler.NewApiHandler(authService)
 
 	r := gin.Default()
 	r.Use(gin.Recovery())

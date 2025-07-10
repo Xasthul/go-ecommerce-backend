@@ -9,22 +9,22 @@ import (
 	"github.com/google/uuid"
 )
 
-type APIHandler struct {
+type ApiHandler struct {
 	productService  *service.ProductService
 	categoryService *service.CategoryService
 }
 
-func NewAPIHandler(
+func NewApiHandler(
 	productService *service.ProductService,
 	categoryService *service.CategoryService,
-) *APIHandler {
-	return &APIHandler{
+) *ApiHandler {
+	return &ApiHandler{
 		productService:  productService,
 		categoryService: categoryService,
 	}
 }
 
-func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
+func (h *ApiHandler) RegisterRoutes(r *gin.Engine) {
 	r.GET("/products", h.getProducts)
 	r.GET("/products/:id", h.getProductById)
 
@@ -36,7 +36,7 @@ func (h *APIHandler) RegisterRoutes(r *gin.Engine) {
 	admin.POST("/categories", h.createCategory)
 }
 
-func (h *APIHandler) getProducts(c *gin.Context) {
+func (h *ApiHandler) getProducts(c *gin.Context) {
 	products, err := h.productService.GetProducts(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to fetch products"})
@@ -49,7 +49,7 @@ type getProductByIdURI struct {
 	ProductId string `uri:"id" binding:"required,uuid"`
 }
 
-func (h *APIHandler) getProductById(c *gin.Context) {
+func (h *ApiHandler) getProductById(c *gin.Context) {
 	var req getProductByIdURI
 	if err := c.ShouldBindUri(&req); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request"})
@@ -79,7 +79,7 @@ type createProductBody struct {
 	Stock       *int32  `json:"stock,omitempty"`
 }
 
-func (h *APIHandler) createProduct(c *gin.Context) {
+func (h *ApiHandler) createProduct(c *gin.Context) {
 	var req createProductBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request"})
@@ -115,7 +115,7 @@ type updateProductBody struct {
 	Stock       *int32  `json:"stock,omitempty"`
 }
 
-func (h *APIHandler) updateProduct(c *gin.Context) {
+func (h *ApiHandler) updateProduct(c *gin.Context) {
 	var uri updateProductURI
 	var req updateProductBody
 	if err := c.ShouldBindUri(&uri); err != nil {
@@ -153,7 +153,7 @@ type deleteProductURI struct {
 	ProductId string `uri:"id" binding:"required,uuid"`
 }
 
-func (h *APIHandler) deleteProduct(c *gin.Context) {
+func (h *ApiHandler) deleteProduct(c *gin.Context) {
 	var uri deleteProductURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request"})
@@ -178,7 +178,7 @@ type createCategoryBody struct {
 	Name string `json:"category_name" binding:"required"`
 }
 
-func (h *APIHandler) createCategory(c *gin.Context) {
+func (h *ApiHandler) createCategory(c *gin.Context) {
 	var req createCategoryBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request"})
