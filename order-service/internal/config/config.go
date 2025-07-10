@@ -9,6 +9,7 @@ type config struct {
 	DatabaseURL          string
 	ProductServiceUrl    string
 	ProductServiceApiKey string
+	RabbitMqUrl          string
 }
 
 func LoadEnv() config {
@@ -17,5 +18,6 @@ func LoadEnv() config {
 		DatabaseURL:          os.Getenv("DB_DSN"),
 		ProductServiceUrl:    os.Getenv("PRODUCT_SERVICE_URL"),
 		ProductServiceApiKey: os.Getenv("PRODUCT_SERVICE_API_KEY"),
+		RabbitMqUrl:          os.Getenv("RABBIT_MQ_URL"),
 	}
 }

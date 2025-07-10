@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/client"
+	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/rabbitmq"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/repository"
 	"github.com/google/uuid"
 )
@@ -12,15 +13,18 @@ import (
 type OrderService struct {
 	orderRepository *repository.OrderRepository
 	productClient   *client.ProductClient
+	publisher       *rabbitmq.Publisher
 }
 
 func NewOrderService(
 	orderRepository *repository.OrderRepository,
 	productClient *client.ProductClient,
+	publisher *rabbitmq.Publisher,
 ) *OrderService {
 	return &OrderService{
 		orderRepository: orderRepository,
 		productClient:   productClient,
+		publisher:       publisher,
 	}
 }
 
@@ -50,5 +54,19 @@ func (s *OrderService) CreateOrder(
 		return &AppError{Code: 500, Message: "Failed to create an order"}
 	}
 
-	return s.orderRepository.CreateOrderItem(ctx, order.ID, productId, quantity, product.PriceCents)
+	err = s.orderRepository.CreateOrderItem(ctx, order.ID, productId, quantity, product.PriceCents)
+	if err != nil {
+		return &AppError{Code: 500, Message: "Failed to create an order item"}
+	}
+
+	err = s.publisher.PublishOrderCreated(&rabbitmq.OrderCreatedEvent{
+		OrderID:   order.ID,
+		ProductID: productId,
+		Quantity:  quantity,
+	})
+	if err != nil {
+		return &AppError{Code: 500, Message: "Failed to publish order created event"}
+	}
+
+	return nil
 }

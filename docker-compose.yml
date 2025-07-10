@@ -16,11 +16,14 @@ services:
   #   ports:
   #     - "6379:6379"
 
-  # rabbitmq:
-  #   image: rabbitmq:3-management
-  #   ports:
-  #     - "5672:5672"
-  #     - "15672:15672"
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
 
   auth-service:
     build: ./auth-service
@@ -37,20 +40,24 @@ services:
     build: ./product-service
     depends_on:
       - postgres
+      - rabbitmq
     environment:
       - DB_DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/products?sslmode=disable
       - PORT=8000
       - API_KEY=${PRODUCT_SERVICE_API_KEY}
+      - RABBIT_MQ_URL=${amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/}
 
   order-service:
     build: ./order-service
     depends_on:
       - postgres
+      - rabbitmq
     environment:
       - DB_DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/orders?sslmode=disable
       - PORT=8000
       - PRODUCT_SERVICE_URL=http://product-service:8000
       - PRODUCT_SERVICE_API_KEY=${PRODUCT_SERVICE_API_KEY}
+      - RABBIT_MQ_URL=${amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/}
 
   api-gateway:
     build: ./api-gateway

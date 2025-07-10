@@ -1,7 +1,7 @@
 CREATE TABLE orders (
     id          UUID PRIMARY KEY,
     user_id     UUID NOT NULL,
-    status      TEXT NOT NULL CHECK (status IN ('pending', 'paid', 'cancelled', 'shipped')),
+    status      TEXT NOT NULL CHECK (status IN ('pending', 'paid')),
     total_cents INTEGER NOT NULL,
     created_at  timestamptz DEFAULT now()
 );

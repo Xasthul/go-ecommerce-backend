@@ -7,6 +7,7 @@ import (
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/client"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/config"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/handler"
+	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/rabbitmq"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/repository"
 	gen "github.com/Xasthul/go-ecommerce-backend/order-service/internal/repository/db/gen"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/service"
@@ -15,13 +16,20 @@ import (
 	_ "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
 	cfg := config.LoadEnv()
 
-	databaseURL := cfg.DatabaseURL
+	rabbitConn, _ := amqp.Dial(cfg.RabbitMqUrl)
+	pubslisher, err := rabbitmq.NewPublisher(rabbitConn)
+	if err != nil {
+		log.Fatal("connect rabbitmq: ", err)
+	}
+	defer rabbitConn.Close()
 
+	databaseURL := cfg.DatabaseURL
 	db, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
 		log.Fatal("connect postgres: ", err)
@@ -32,7 +40,7 @@ func main() {
 	queries := gen.New(db)
 	orderRepository := repository.NewOrderRepository(queries)
 	productClient := client.NewProductClient(cfg.ProductServiceUrl, cfg.ProductServiceApiKey)
-	orderService := service.NewOrderService(orderRepository, productClient)
+	orderService := service.NewOrderService(orderRepository, productClient, pubslisher)
 	apiHandler := handler.NewApiHandler(orderService)
 
 	r := gin.Default()
