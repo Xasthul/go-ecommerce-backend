@@ -24,7 +24,7 @@ func NewApiHandler(
 	}
 }
 
-func (h *ApiHandler) RegisterRoutes(r *gin.Engine) {
+func (h *ApiHandler) RegisterRoutes(r *gin.Engine, apiKey string) {
 	r.GET("/products", h.getProducts)
 	r.GET("/products/:id", h.getProductById)
 
@@ -32,8 +32,10 @@ func (h *ApiHandler) RegisterRoutes(r *gin.Engine) {
 	admin.POST("/products", h.createProduct)
 	admin.PATCH("/products/:id", h.updateProduct)
 	admin.DELETE("/products/:id", h.deleteProduct)
-
 	admin.POST("/categories", h.createCategory)
+
+	internal := r.Group("/internal", middleware.InternalOnly(apiKey))
+	internal.GET("/products/:id", h.getProductById)
 }
 
 func (h *ApiHandler) getProducts(c *gin.Context) {

@@ -37,7 +37,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
-	apiHandler.RegisterRoutes(r)
+	apiHandler.RegisterRoutes(r, cfg.ApiKey)
 	r.Run(":" + cfg.Port)
 }
 
