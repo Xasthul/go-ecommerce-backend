@@ -1,4 +1,4 @@
--- name: CreateOrder :exec
+-- name: CreateOrder :one
 INSERT INTO orders (
     id,
     user_id,
@@ -9,7 +9,8 @@ INSERT INTO orders (
     $1,
     $2,
     $3
-);
+) 
+RETURNING *;
 
 -- name: GetOrderById :one
 SELECT *
