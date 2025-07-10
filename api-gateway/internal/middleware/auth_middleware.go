@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -41,7 +42,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 			return
 		}
 
-		role, _ := claims["role"].(string)
+		role := fmt.Sprintf("%v", claims["role"])
 
 		c.Request.Header.Set("X-User-Id", userID)
 		c.Request.Header.Set("X-User-Role", role)
