@@ -21,19 +21,25 @@ func main() {
 	})
 
 	authService := createReverseProxy(cfg.AuthServiceURL)
-	r.POST("/auth/login", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
-	r.POST("/auth/register", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
-	r.POST("/auth/refresh", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
+	{
+		r.POST("/auth/login", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
+		r.POST("/auth/register", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
+		r.POST("/auth/refresh", gin.WrapH(stripPrefixAndProxy(authService, "/auth")))
+	}
 
 	productService := createReverseProxy(cfg.ProductServiceURL)
-	r.GET("/products", gin.WrapH(productService))
-	r.GET("/products/*proxyPath", gin.WrapH(productService))
+	{
+		r.GET("/products", gin.WrapH(productService))
+		r.GET("/products/*proxyPath", gin.WrapH(productService))
+	}
 
-	loggedIn := r.Group("/admin", middleware.AuthMiddleware(cfg.JwtSecret))
-	loggedIn.POST("/products", gin.WrapH(productService))
-	loggedIn.PATCH("/products/*proxyPath", gin.WrapH(productService))
-	loggedIn.DELETE("/products/*proxyPath", gin.WrapH(productService))
-	loggedIn.POST("/categories", gin.WrapH(productService))
+	admin := r.Group("/admin", middleware.AuthMiddleware(cfg.JwtSecret))
+	{
+		admin.POST("/products", gin.WrapH(productService))
+		admin.PATCH("/products/*proxyPath", gin.WrapH(productService))
+		admin.DELETE("/products/*proxyPath", gin.WrapH(productService))
+		admin.POST("/categories", gin.WrapH(productService))
+	}
 
 	r.Run(":" + cfg.Port)
 }

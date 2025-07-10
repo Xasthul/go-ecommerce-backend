@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/client"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/config"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/handler"
 	"github.com/Xasthul/go-ecommerce-backend/order-service/internal/repository"
@@ -30,7 +31,8 @@ func main() {
 
 	queries := gen.New(db)
 	orderRepository := repository.NewOrderRepository(queries)
-	orderService := service.NewOrderService(orderRepository)
+	productClient := client.NewProductClient(cfg.ProductServiceUrl, cfg.ProductServiceApiKey)
+	orderService := service.NewOrderService(orderRepository, productClient)
 	apiHandler := handler.NewApiHandler(orderService)
 
 	r := gin.Default()
