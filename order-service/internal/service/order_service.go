@@ -48,6 +48,10 @@ func (s *OrderService) CreateOrder(
 		return &AppError{Code: 500, Message: "Failed to get a product"}
 	}
 
+	if product.Stock < quantity {
+		return &AppError{Code: 409, Message: "Not enough product in stock"}
+	}
+
 	totalCents := product.PriceCents * quantity
 	order, err := s.orderRepository.CreateOrder(ctx, userId, "pending", totalCents)
 	if err != nil {
