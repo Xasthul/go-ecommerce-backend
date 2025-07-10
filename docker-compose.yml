@@ -45,7 +45,7 @@ services:
       - DB_DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/products?sslmode=disable
       - PORT=8000
       - API_KEY=${PRODUCT_SERVICE_API_KEY}
-      - RABBIT_MQ_URL=${amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/}
+      - RABBIT_MQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
 
   order-service:
     build: ./order-service
@@ -57,7 +57,7 @@ services:
       - PORT=8000
       - PRODUCT_SERVICE_URL=http://product-service:8000
       - PRODUCT_SERVICE_API_KEY=${PRODUCT_SERVICE_API_KEY}
-      - RABBIT_MQ_URL=${amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/}
+      - RABBIT_MQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
 
   api-gateway:
     build: ./api-gateway
