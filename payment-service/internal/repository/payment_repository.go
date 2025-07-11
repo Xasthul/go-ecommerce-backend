@@ -21,11 +21,16 @@ func (r *PaymentRepository) CreatePayment(
 	userId uuid.UUID,
 	amountCents int,
 	status string,
-) error {
-	return r.q.CreatePayment(ctx, gen.CreatePaymentParams{
+) (*gen.Payment, error) {
+	payment, err := r.q.CreatePayment(ctx, gen.CreatePaymentParams{
 		OrderID:     orderId,
 		UserID:      userId,
 		AmountCents: int32(amountCents),
 		Status:      status,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &payment, nil
 }

@@ -1,4 +1,4 @@
--- name: CreatePayment :exec
+-- name: CreatePayment :one
 INSERT INTO payments (
     id,
     order_id,
@@ -11,4 +11,5 @@ INSERT INTO payments (
     $2,
     $3,
     $4
-);
+) 
+RETURNING *;

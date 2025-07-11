@@ -82,7 +82,6 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:8000
       - PRODUCT_SERVICE_URL=http://product-service:8000
       - ORDER_SERVICE_URL=http://order-service:8000
-      - PAYMENT_SERVICE_URL=http://payment-service:8000
       - JWT_SECRET=${JWT_SECRET}
     ports:
       - "${API_GATEWAY_PORT}:8000"

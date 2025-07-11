@@ -21,6 +21,13 @@ import (
 func main() {
 	cfg := config.LoadEnv()
 
+	rabbitConn, _ := amqp.Dial(cfg.RabbitMqUrl)
+	pubslisher, err := rabbitmq.NewPublisher(rabbitConn)
+	if err != nil {
+		log.Fatal("connect rabbitmq: ", err)
+	}
+	defer rabbitConn.Close()
+
 	databaseURL := cfg.DatabaseURL
 	db, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
@@ -31,14 +38,9 @@ func main() {
 
 	queries := gen.New(db)
 	paymentRepository := repository.NewPaymentRepository(queries)
-	paymentService := service.NewOrderService(paymentRepository)
+	paymentService := service.NewOrderService(paymentRepository, pubslisher)
 	apiHandler := handler.NewApiHandler(paymentService)
 
-	rabbitConn, err := amqp.Dial(cfg.RabbitMqUrl)
-	if err != nil {
-		log.Fatal("connect rabbitmq: ", err)
-	}
-	defer rabbitConn.Close()
 	consumeRabbitMqEvents(rabbitConn, paymentService)
 
 	r := gin.Default()
