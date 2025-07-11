@@ -63,9 +63,11 @@ func (s *OrderService) CreateOrder(
 	}
 
 	err = s.publisher.PublishOrderCreated(&rabbitmq.OrderCreatedEvent{
-		OrderID:   order.ID,
-		ProductID: productId,
-		Quantity:  quantity,
+		UserID:     userId,
+		OrderID:    order.ID,
+		ProductID:  productId,
+		Quantity:   quantity,
+		TotalCents: totalCents,
 	})
 	if err != nil {
 		return &AppError{Code: 500, Message: "Failed to publish order created event"}

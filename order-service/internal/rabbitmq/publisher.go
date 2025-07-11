@@ -31,9 +31,11 @@ func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
 }
 
 type OrderCreatedEvent struct {
-	OrderID   uuid.UUID `json:"order_id"`
-	ProductID uuid.UUID `json:"product_id"`
-	Quantity  int       `json:"quantity"`
+	UserID     uuid.UUID `json:"user_id"`
+	OrderID    uuid.UUID `json:"order_id"`
+	ProductID  uuid.UUID `json:"product_id"`
+	Quantity   int       `json:"quantity"`
+	TotalCents int       `json:"total_cents"`
 }
 
 func (p *Publisher) PublishOrderCreated(payload *OrderCreatedEvent) error {

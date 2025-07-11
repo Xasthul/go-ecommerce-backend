@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/rabbitmq"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository"
 	db "github.com/Xasthul/go-ecommerce-backend/product-service/internal/repository/db/gen"
 	"github.com/google/uuid"
@@ -108,8 +107,12 @@ func (s *ProductService) DeleteProduct(ctx context.Context, productId uuid.UUID)
 	return nil
 }
 
-func (s *ProductService) DecreaseStock(ctx context.Context, payload *rabbitmq.OrderCreatedEvent) {
-	product, err := s.productRepository.DecreaseStock(ctx, payload.ProductID, payload.Quantity)
+func (s *ProductService) DecreaseStock(
+	ctx context.Context,
+	productId uuid.UUID,
+	quantity int,
+) {
+	product, err := s.productRepository.DecreaseStock(ctx, productId, quantity)
 	if err != nil || product == nil {
 		// handle failed to decrease stock
 		return

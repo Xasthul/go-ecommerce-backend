@@ -73,7 +73,11 @@ func consumeRabbitMqEvents(rabbitConn *amqp.Connection, productService *service.
 	err := rabbitmq.ConsumeOrders(
 		rabbitConn,
 		func(event *rabbitmq.OrderCreatedEvent) {
-			productService.DecreaseStock(context.Background(), event)
+			productService.DecreaseStock(
+				context.Background(),
+				event.ProductID,
+				event.Quantity,
+			)
 		})
 	if err != nil {
 		log.Fatal("consumer orders: ", err)
