@@ -7,10 +7,10 @@ INSERT INTO users (
     status
 ) VALUES (
     gen_random_uuid(),
-    $1,             -- email
-    $2,             -- password_hash
-    COALESCE($3, 0),-- role (0 = buyer) ; allow NULL -> default
-    0               -- status = pending_email
+    $1,
+    $2,
+    COALESCE($3, 0),
+    0
 );
 
 -- name: GetUserByEmail :one

@@ -61,6 +61,16 @@ services:
       - PRODUCT_SERVICE_API_KEY=${PRODUCT_SERVICE_API_KEY}
       - RABBIT_MQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
 
+  payment-service:
+    build: ./payment-service
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      - DB_DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/payments?sslmode=disable
+      - PORT=8000
+      - RABBIT_MQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+
   api-gateway:
     build: ./api-gateway
     depends_on:
@@ -72,6 +82,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:8000
       - PRODUCT_SERVICE_URL=http://product-service:8000
       - ORDER_SERVICE_URL=http://order-service:8000
+      - PAYMENT_SERVICE_URL=http://payment-service:8000
       - JWT_SECRET=${JWT_SECRET}
     ports:
       - "${API_GATEWAY_PORT}:8000"
