@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/mapper"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/middleware"
 	"github.com/Xasthul/go-ecommerce-backend/product-service/internal/service"
 	"github.com/gin-gonic/gin"
@@ -44,7 +45,10 @@ func (h *ApiHandler) getProducts(c *gin.Context) {
 		c.JSON(500, gin.H{"error": "Failed to fetch products"})
 		return
 	}
-	c.JSON(200, products)
+
+	productsResponse := mapper.NewProductListResponse(products)
+
+	c.JSON(200, productsResponse)
 }
 
 type getProductByIdURI struct {
@@ -69,7 +73,10 @@ func (h *ApiHandler) getProductById(c *gin.Context) {
 		c.JSON(500, gin.H{"error": "Failed to fetch product"})
 		return
 	}
-	c.JSON(200, product)
+
+	productResponse := mapper.NewProductResponse(*product)
+
+	c.JSON(200, productResponse)
 }
 
 type createProductBody struct {
